@@ -198,7 +198,10 @@
 				    }
 				    var start_input, end_input;
 				    var myCollection = new ymaps.GeoObjectCollection();
+
 					function updateMap() {
+
+
 						myCollection.removeAll();
 			        	var startP, endP, line_coords = [];
 			        	if (start_coord) {
@@ -212,17 +215,17 @@
 							myCollection.add(startP);
 				        }
 				        
-						for (var i = 1; i <= temp_points.length; i++) {
-							if (!temp_points[i - 1]) {
+						for (var i = 0; i < temp_points.length; i++) {
+							if (!temp_points[i]) {
 								continue;
 							}
-							var P = new ymaps.Placemark(temp_points[i - 1][0], {
-								iconContent: 'П' + i.toString(),
-								balloonContent: temp_points[i - 1][1]
+							var P = new ymaps.Placemark(temp_points[i][0], {
+								iconContent: 'П' + (i + 1).toString(),
+								balloonContent: temp_points[i][1]
 							}, {
 								preset: 'islands#violetStretchyIcon'
 							});
-							line_coords.push(temp_points[i - 1][0]);
+							line_coords.push(temp_points[i][0]);
 							myCollection.add(P);
 						}
 
@@ -237,32 +240,44 @@
 							myCollection.add(endP);
 						}
 
-						var myPolyline = new ymaps.GeoObject({
-						    geometry: {
-						        type: "LineString",
-						        coordinates: line_coords
-						    }
-						});
 
-						myCollection.add(myPolyline);
+						if (start_coord && end_coord) {
+							ymaps.route([start_coord, end_coord]).then(
+									function(route) {
+										myCollection.add(route);
+										console.log('ok');
+									},
+									function(err) {
+										console.log('route error');
+									}
+								);
+						}
+
+
 			            myMap.geoObjects.add(myCollection);
 						myMap.setBounds(myMap.geoObjects.getBounds(), {checkZoomRange:true}).then(function(){ if(myMap.getZoom() > 10) myMap.setZoom(10);});
 					}
+
 					var last_start = '';
 					var last_end = '';
 					var last_i = -1;
+
 					setInterval(function() {
 					    start_input = document.getElementById('ts_route_start').value;
 					    end_input = document.getElementById('ts_route_finish').value;
+
 					    var i = 0, need = 0, fill = 0;
-					    console.log(temp_points);
-					    console.log(temp_query);
+
+					    //console.log(temp_points);
+					    //console.log(temp_query);
+
 						while (document.getElementsByName('ts_route_intermediate_point[' + i.toString() + ']')[0]) {
 							if (document.getElementsByName('ts_route_intermediate_point[' + i.toString() + ']')[0].value) {
 								fill = 1;
 							}
 							i++;
 						}
+
 						if (fill) {
 							if (i < last_i) {
 								console.log(i, temp_query.length);
@@ -283,10 +298,12 @@
 								}
 							}
 						}
+
 						last_i = i;
-						console.log(need, fill);
+						//console.log(need, fill);
 						if (start_input == last_start && end_input == last_end && !need)
 							return;
+
 						last_start = start_input;
 						last_end = end_input;
 						if (need) {
@@ -310,6 +327,7 @@
 						        });
 							}
 						}
+
 						console.log('start input changed to: ', start_input);
 					    ymaps.geocode(start_input, {
 					        results: 1
@@ -322,13 +340,16 @@
 
 				        console.log('end input changed to: ', end_input);
 					    ymaps.geocode(end_input, {
-					        results: 1
-					    }).then(function (res) {
-					    	var firstGeoObject = res.geoObjects.get(0),
-				                coords = firstGeoObject.geometry.getCoordinates();
-				        	end_coord = coords;
-				            updateMap();
+							results: 1
+						}).then(function (res) {
+							var firstGeoObject = res.geoObjects.get(0),
+									coords = firstGeoObject.geometry.getCoordinates();
+							end_coord = coords;
+							updateMap();
 				        });
+
+
+
 					}, 1000);
 				}
 				

@@ -1299,9 +1299,11 @@
 		    var suggestView2 = new ymaps.SuggestView('ts_route_finish');
 		    var suggestView3 = new ymaps.SuggestView('ts_route_district');
 		}
+
 		var max = -1;
 		var sugests = {};
 		setInterval(updateInterPt, 3000);
+
 		function updateInterPt() {
 			var i = 0;
 			while (document.getElementsByName('ts_route_intermediate_point[' + i.toString() + ']')[0]) {
