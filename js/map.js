@@ -1,14 +1,14 @@
 'use strict';
 
-class Point {
+class PlaceMark {
     constructor(options) {
         if(options.map) this.map = options.map;
+        this.collection = this.map.geoObjects;
         this.content = options.content || 'Точка';
         if(options.elem) {
             this.elem = options.elem;
             let suggestView = new ymaps.SuggestView(this.elem);
             suggestView.events.add('select', () => this.render());
-            //this.elem.addEventListener('change', (e) => { this.render(e); });
         }
     }
 
@@ -36,16 +36,77 @@ class Point {
     }
 
     add() {
-        this.map.geoObjects.add(this.placemark);
-        this.index = this.map.geoObjects.getLength() - 1;
+        this.collection.add(this.placemark);
+        this.index = this.collection.getLength() - 1;
     }
 
     clear() {
         //debugger;
         if(!this.index && this.index != 0) return;
-        this.map.geoObjects.remove(this.map.geoObjects.get(this.index));
+        this.collection.remove(this.collection.get(this.index));
         this.index = null;
     }
+}
+
+
+class Router {
+    constructor(options) {
+        this.map = options.map;
+        this.pointA = options.pointA;
+        this.pointB = options.pointB;
+        this.interPoints = options.points;
+        this.collection = this.map.geoObjects;
+
+        this.render();
+    }
+
+    render() {
+        let ctx = this;
+
+        let start_coords = this.pointA.geometry.getCoordinates();
+        let end_coords = this.pointB.geometry.getCoordinates();
+
+        ymaps.route([start_coords, end_coords])
+            .then(
+                function(route) {
+                    ctx.route = route;
+                    ctx.collection.removeAll();
+                    ctx.add();
+                },
+                function(error) {
+                    console.log('error: ' + error);
+                }
+            )
+    }
+
+    add() {
+        this.collection.add(this.route);
+
+        let points = this.route.getWayPoints(), lastPoint = points.getLength() - 1;
+        points.options.set('preset', 'islands#redStretchyIcon');
+        points.options.set('draggable', 'true');
+        points.get(0).properties.set('iconContent', 'A');
+        points.get(lastPoint).properties.set('iconContent', 'Б');
+
+        this.pointA = points.get(0);
+        this.pointB = points.get(lastPoint);
+
+        console.log('ok');
+
+        this.pointA.events.add('dragend', (e) => this.onChange(e));
+        this.pointB.events.add('dragend', (e) => this.onChange(e));
+
+    }
+
+    onChange(e) {
+        let thisPoint = e.get('target');
+        let coords = thisPoint.geometry.getCoordinates();
+
+        thisPoint.geometry.setCoordinates(coords);
+
+        this.render();
+    }
+
 }
 
 
@@ -65,44 +126,35 @@ function init() {
 
     let points = new ymaps.GeoObjectCollection();
 
-    let startP = new Point({
+    let startP = new PlaceMark({
         map: myMap,
         elem: start_elem,
         content: 'A',
         collection: points
     });
 
-    let endP = new Point({
+    let endP = new PlaceMark({
         map: myMap,
         elem: end_elem,
         content: 'B',
         collection: points
     });
 
-    myMap.geoObjects.events.add('add', (e) => router(e, myMap, startP, endP));
+    myMap.geoObjects.events.add('add', (e) => createRouter(e, myMap, startP, endP));
 }
 
 
-function router(e, map, pointA, pointB, ...interPoints) {
+function createRouter(e, map, pointA, pointB, ...interPoints) {
     let target = e.get('target');
     let last_added = target.get(target.getLength() - 1);
-
     if(!last_added.geometry) return;
 
-    ////console.dir(target.get(map.geoObjects.getLength() - 1).geometry.getType());
-    //let arr = map.geoObjects.toArray();
-
     if(!pointA.coords || !pointB.coords) return;
-    let start_coords = pointA.coords;
-    let end_coords = pointB.coords;
-    ymaps.route([start_coords, end_coords])
-        .then(
-            function(route) {
-                console.log('ok');
-                map.geoObjects.add(route);
-            },
-            function(error) {
-                console.log('error: ' + error);
-            }
-        )
+
+    let router = new Router({
+        map: map,
+        pointA: pointA.placemark,
+        pointB: pointB.placemark
+    });
+
 }
