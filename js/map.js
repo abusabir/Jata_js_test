@@ -3,14 +3,14 @@
 class Point {
     constructor(options) {
         if(options.map) this.map = options.map;
+        this.content = options.content || 'Точка';
         if(options.elem) {
-
             this.elem = options.elem;
-            this.elem.addEventListener('input', () => { this._renderHandler(); });
+            this.elem.addEventListener('input', () => { this.render(); });
         }
     }
 
-    _renderHandler() {
+    render() {
         let ctx = this;
         this.input_value = this.elem.value;
         ymaps.geocode(this.input_value, {
@@ -19,7 +19,7 @@ class Point {
             ctx.clear();
             ctx.coords = res.geoObjects.get(0).geometry.getCoordinates();
             ctx.placemark =  new ymaps.Placemark(ctx.coords, {
-                iconContent: 'A',
+                iconContent: ctx.content,
                 balloonContent: ctx.input_value
             }, {
                 preset: 'islands#violetStretchyIcon',
@@ -30,8 +30,6 @@ class Point {
         }, function(err) {
             console.log('Point error');
         });
-
-
     }
 
     add() {
@@ -57,15 +55,25 @@ function init() {
         searchControlProvider: 'yandex#search'
     });
 
+    let suggestViewStart = new ymaps.SuggestView('ts_route_start');
+    let suggestViewEnd = new ymaps.SuggestView('ts_route_finish');
+
     let start_elem = document.getElementById('ts_route_start');
     let end_elem = document.getElementById('ts_route_finish');
 
     let startP = new Point({
         map: myMap,
-        elem: start_elem
+        elem: start_elem,
+        content: 'A'
     });
 
+    let endP = new Point({
+        map: myMap,
+        elem: end_elem,
+        content: 'B'
+    });
 
-
+    suggestViewStart.events.add('select', () => startP.render());
+    suggestViewEnd.events.add('select', () => endP.render());
 
 }
