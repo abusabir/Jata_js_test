@@ -1,47 +1,7 @@
 			expromptum();
 			
 			jQuery(function($){
-				$("#tel-number").mask("(999) 999-99-99"); // Маска телефона
 
-				$('body').on('click', '.tel-number', function(){
-					$(".tel-number").mask("(999) 999-99-99");
-					});
-				
-				
-				$('#vladelec').click(function() {
-						$(".yurik-fizik-check").show();
-						});
-				$('#reklamodatel').click(function() {
-						$(".yurik-fizik-check").hide();
-					
-						});
-				
-				$(document).ready( function() {
-					$(".file-upload input[type=file]").change(function(){
-						 var filename = $(this).val().replace(/.*\\/, "");
-						 $("#filename").html(filename);
-					});
-				});
-				
-				
-				$('#helper-slider').on('fotorama:show', function (e, fotorama) {
-						if(fotorama.activeIndex+1 == fotorama.size) {
-							$('#helper-slider-close').attr('data-dismiss', 'alert').removeAttr("disabled");
-							}
-					});
-				
-				$('#modal_how_it_work').on('fotorama:show', function (e, fotorama) {
-						if(fotorama.activeIndex+1 == fotorama.size) {
-							$('.close-modal--how-it-work').attr('data-dismiss', 'modal').removeAttr("disabled");
-							}
-					});
-				
-				$('select[name="ts_color"]').simplecolorpicker({
-  					theme: 'glyphicons'
-					});
-				$('select[name="ts_color"]').simplecolorpicker('selectColor', '#dc2127');
-				
-				
 				$('.timepicker-input-start').timepicker({
                 	template: 'dropdown',
                 	showInputs: false,
@@ -122,16 +82,12 @@
 				
 				
 				
-				
-				
-				
-				
 				var myMap;
 
 				ymaps.ready(init);
 
 				function init () {
-					var myPlacemark;
+					//var myPlacemark;
 					myMap = new ymaps.Map('map', {
 						center: [59.95, 30.2],
 						zoom: 10
@@ -204,12 +160,16 @@
 
 						myCollection.removeAll();
 			        	var startP, endP, line_coords = [];
+
+						if(startP)
+
 			        	if (start_coord) {
 				        	startP = new ymaps.Placemark(start_coord, {
 								iconContent: 'A',
 								balloonContent: start_input
 							}, {
-								preset: 'islands#violetStretchyIcon'
+								preset: 'islands#violetStretchyIcon',
+								draggable: true
 							});
 							line_coords.push(start_coord);
 							myCollection.add(startP);
@@ -256,6 +216,7 @@
 
 			            myMap.geoObjects.add(myCollection);
 						myMap.setBounds(myMap.geoObjects.getBounds(), {checkZoomRange:true}).then(function(){ if(myMap.getZoom() > 10) myMap.setZoom(10);});
+						startP.editor.startEditing();
 					}
 
 					var last_start = '';
